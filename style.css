@@ -1,7 +1,16 @@
 /* 🌑 Base layout */
+:root {
+  --bg: #121212;
+  --card: #1e1e1e;
+  --gold: #ffcc00;
+  --gold-strong: #ffaa00;
+  --text: #ffffff;
+}
+* { box-sizing: border-box; }
+
 body {
-  background-color: #121212;
-  color: #fff;
+  background-color: var(--bg);
+  color: var(--text);
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 20px;
@@ -18,71 +27,50 @@ body {
 /* 🃏 Movie card */
 .card {
   width: 200px;
-  background-color: #1e1e1e;
+  background-color: var(--card);
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform .2s, box-shadow .2s;
 }
 .card:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 20px #ffcc00;
+  box-shadow: 0 0 20px var(--gold);
 }
 
-/* 🖼 Poster: fade-in + hover dim (hover работает только после загрузки) */
+/* 🖼 Poster: fade-in + hover dim */
 .card img {
   width: 100%;
   display: block;
-  opacity: 0;                          /* изначально скрыт (для fade-in) */
-  transition: opacity 1s ease-in-out;  /* плавное проявление */
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
 }
-.card img.loaded {
-  opacity: 1;                          /* становится видимым после загрузки */
-}
-.card img.loaded:hover {
-  opacity: 0.85;                        /* лёгкое затемнение при наведении */
-  transition: opacity 0.3s ease;
-}
+.card img.loaded { opacity: 1; }
+.card img.loaded:hover { opacity: .85; transition: opacity .3s ease; }
 
 /* ℹ️ Card info block */
-.card .info {
-  padding: 10px;
-  text-align: center;
-}
+.card .info { padding: 10px; text-align: center; }
 
-/* ✨ Title highlight color (берётся из CSS-переменной --hl) */
-.card .info h3 {
-  transition: color 0.3s ease, text-shadow 0.3s ease;
-}
-.card:hover .info h3 {
-  color: var(--hl, #ffcc00);
-  text-shadow: 0 0 8px var(--hl, #ffcc00);
-}
+/* ✨ Title highlight */
+.card .info h3 { transition: color .3s ease, text-shadow .3s ease; }
+.card:hover .info h3 { color: var(--gold); text-shadow: 0 0 8px var(--gold); }
 
-/* 🔍 Search */
-.search-container {
-  margin-bottom: 20px;
-  text-align: center;
-}
+/* 🔍 (старый отдельный поиск можно оставить — он не мешает) */
+.search-container { margin-bottom: 20px; text-align: center; }
 #search-input {
   width: 300px;
   padding: 10px;
-  border: 2px solid #ffcc00;
+  border: 2px solid var(--gold);
   border-radius: 25px;
   background-color: #1e1e1e;
-  color: white;
+  color: #fff;
   font-size: 16px;
   outline: none;
 }
-#search-input:focus {
-  box-shadow: 0 0 10px #ffcc00;
-}
+#search-input:focus { box-shadow: 0 0 10px var(--gold); }
 
-/* 🔤 Match highlight inside titles */
-.highlight {
-  color: #ffcc00;
-  font-weight: bold;
-}
+/* 🔤 Match highlight */
+.highlight { color: var(--gold); font-weight: bold; }
 
 /* 🚫 Empty state */
 .no-results {
@@ -94,135 +82,11 @@ body {
 
 /* ⏳ Decade filters */
 .decade-filters {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
+  display: flex; gap: 10px; margin-bottom: 20px;
+  justify-content: center; flex-wrap: wrap;
 }
 .decade-filters button {
-  background: #222;
-  color: #ffcc00;
-  border: 1px solid #ffcc00;
-  padding: 8px 15px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 14px;
-}
-.decade-filters button:hover {
-  background: #ffcc00;
-  color: #000;
-}
-.decade-filters button.active {
-  background: #ffcc00;
-  color: #000;
-  font-weight: bold;
-}
-
-/* 📖 Modal basic */
-.modal {
-  display: none;                       /* управляется JS */
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0,0,0,0.8);
-  justify-content: center;
-  align-items: center;
-}
-.modal-content {
-  background-color: #1e1e1e;
-  padding: 20px;
-  border-radius: 10px;
-  width: 500px;
-  max-width: 92vw;
-}
-.close {
-  float: right;
-  cursor: pointer;
-  font-size: 24px;
-}
-
-/* 🔗 Links inside modal */
-.modal-content a {
-  color: #ffcc00;
-  text-decoration: none;
-  font-weight: bold;
-}
-.modal-content a:hover {
-  color: #ffaa00;
-  text-decoration: underline;
-}
-
-/* ▶️ Trailer button (показывается, если есть трейлер) */
-.trailer-btn {
-  margin-top: 10px;
-  background: #ffcc00;
-  color: #000;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-.trailer-btn:hover {
-  background: #ffaa00;
-}
-
-/* 🎥 Trailer player wrapper (адаптив 16:9) */
-.trailer-wrap {
-  margin-top: 12px;
-  position: relative;
-  width: 100%;
-  padding-bottom: 56.25%; /* 16:9 */
-  border-radius: 8px;
-  overflow: hidden;
-  background: #000;
-}
-.trailer-wrap iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-/* 🎬 Header */
-.site-header {
-  display: flex;
-  align-items: center;
-  justify-content: center; /* можешь заменить на space-between если хочешь справа поиск */
-  padding: 20px;
-  background-color: #111; /* тёмный фон под логотип */
-  border-bottom: 2px solid gold; /* золотая линия в стиле поиска */
-}
-
-.logo {
-  font-size: 2rem;
-  font-weight: bold;
-  color: gold;
-  font-family: 'Georgia', serif; /* кинематографический стиль */
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.site-header {
-  display: flex;
-  align-items: center;
-  gap: 20px; /* расстояние между логотипом и поиском */
-  padding: 15px 20px;
-}
-
-.logo-img {
-  height: 50px; /* подгони под размер логотипа */
-}
-
-.search-bar {
-  flex: 1;
-  padding: 10px 15px;
-  border: 2px solid #ffcc00;
-  border-radius: 25px;
-  background: #111;
-  color: #eee;
-  font-size: 16px;
-}
-
-
-
+  background: #222; color: var(--gold);
+  border: 1px solid var(--gold);
+  padding: 8px 15px; border-radius: 20px;
+  cursor: pointer; transition: all .3s; font-size:
