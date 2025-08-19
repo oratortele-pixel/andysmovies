@@ -1,0 +1,19 @@
+<!-- favicon.svg | simple clapperboard in your site's colors -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- background -->
+  <rect x="0" y="0" width="64" height="64" rx="12" fill="#121212"></rect>
+  <!-- clapper top -->
+  <rect x="10" y="12" width="44" height="12" rx="3" fill="#2a2a2a"></rect>
+  <!-- stripes on the clapper -->
+  <rect x="12" y="14" width="8" height="8" rx="1" fill="#ffcc00"></rect>
+  <rect x="22" y="14" width="8" height="8" rx="1" fill="#ffcc00"></rect>
+  <rect x="32" y="14" width="8" height="8" rx="1" fill="#ffcc00"></rect>
+  <rect x="42" y="14" width="8" height="8" rx="1" fill="#ffcc00"></rect>
+  <!-- slate body -->
+  <rect x="10" y="26" width="44" height="28" rx="6" fill="#1e1e1e" stroke="#333" stroke-width="1"></rect>
+  <!-- title bar -->
+  <rect x="14" y="30" width="36" height="6" rx="2" fill="#333"></rect>
+  <!-- lines -->
+  <rect x="14" y="40" width="28" height="4" rx="2" fill="#444"></rect>
+  <rect x="14" y="48" width="24" height="4" rx="2" fill="#444"></rect>
+</svg>
