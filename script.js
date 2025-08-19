@@ -1,261 +1,297 @@
 /* ===========================================================
-   Movie Catalog — main script
-   Фичи: поиск, фильтры, подсветка, fade-in, модалка, трейлеры
-   =========================================================== */
+   Andy's Movies — main script
+   Features: load JSON, search, decade filters, highlight, fade-in,
+             big modal, trailer (privacy), close on Esc / backdrop
+=========================================================== */
 
-let allMovies = [];
-let currentDecade = 'all';
+(() => {
+  // --- Feature toggles ---
+  const ENABLE_FADE_IN     = true;
+  const ENABLE_MODAL_ANIM  = true;
+  const ENABLE_TRAILERS    = true;
 
-/* ===== Feature toggles (для быстрого отката) ===== */
-const ENABLE_FADE_IN     = true;  // плавное проявление постеров
-const ENABLE_MODAL_ANIM  = true;  // анимация открытия/закрытия модалки
-const ENABLE_TRAILERS    = true;  // кнопка трейлера + встроенный плеер
+  // --- State ---
+  let allMovies = [];
+  let currentDecade = 'all';
 
-/* 📥 Загрузка фильмов из JSON */
-function loadMovies() {
-  fetch('movies.json')
-    .then(res => res.json())
-    .then(movies => {
-      allMovies = movies;
-      renderMovies(movies);
+  // --- Elements ---
+  const $catalog      = byId('catalog');
+  const $searchInput  = byId('search-input');
+  const $decadeBar    = q('.decade-filters');
+  const $modal        = byId('modal');
+  const $close        = byId('close');
+  const $mTitle       = byId('modal-title');
+  const $mYear        = byId('modal-year');
+  const $mNotes       = byId('modal-notes');
+  const $mQuotes      = byId('modal-quotes');
+  const $mLinks       = byId('modal-links');
+  const $trailerBtn   = byId('trailer-btn');
+  const $trailerWrap  = byId('trailer-wrap');
+  const $trailerFrame = byId('trailer-frame');
+
+  // --- Init ---
+  boot();
+
+  async function boot() {
+    wireHeader();
+    wireModalGeneral();
+    await loadMovies();
+    renderMovies(allMovies);
+  }
+
+  // Load movies.json (expects array of {title, year, poster, notes?, quotes?, links?, color?, trailer?})
+  async function loadMovies() {
+    try {
+      const res = await fetch('movies.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+      allMovies = await res.json();
       setupDecadeFilters();
       setupSearch();
-      setupModalBGClose(); // закрытие модалки по клику на фон
-    })
-    .catch(err => console.error('Load error:', err));
-}
-
-/* 🎨 Отрисовка каталога (десятилетия + поиск + подсветка) */
-function renderMovies(movies) {
-  const catalog = document.getElementById('catalog');
-  catalog.innerHTML = '';
-
-  // 1) фильтр по десятилетию
-  let filtered = movies;
-  if (currentDecade !== 'all') {
-    const d0 = parseInt(currentDecade, 10);
-    filtered = movies.filter(m => m.year >= d0 && m.year < d0 + 10);
+    } catch (err) {
+      console.error('Failed to load movies.json:', err);
+      allMovies = [];
+    }
   }
 
-  // 2) поиск по префиксу, игнорируя артикли
-  const q = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
-  if (q) {
-    filtered = filtered.filter(m => {
-      const clean = m.title.replace(/^(the|a|an)\s+/i, '');
-      return clean.toLowerCase().startsWith(q) || m.title.toLowerCase().startsWith(q);
-    });
-  }
+  // Render grid with filters + search + highlight
+  function renderMovies(movies) {
+    if (!$catalog) return;
+    $catalog.innerHTML = '';
 
-  // 3) карточки
-  filtered.forEach(movie => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.setProperty('--hl', movie.color || '#ffcc00'); // цвет подсветки заголовка
-
-    // постер (вариант с fade-in)
-    if (ENABLE_FADE_IN) {
-      const img = document.createElement('img');
-      img.src = movie.poster;
-      img.alt = movie.title;
-      img.loading = 'lazy';
-      img.onload = () => img.classList.add('loaded');
-      // если картинка уже из кэша — onload может не сработать
-      if (img.complete) requestAnimationFrame(() => img.classList.add('loaded'));
-      card.appendChild(img);
-    } else {
-      // откат: без fade-in
-      card.insertAdjacentHTML('beforeend', `<img src="${movie.poster}" alt="${movie.title}" loading="lazy">`);
+    // 1) decade filter
+    let list = movies;
+    if (currentDecade !== 'all') {
+      const d0 = parseInt(currentDecade, 10);
+      list = list.filter(m => Number(m.year) >= d0 && Number(m.year) < d0 + 10);
     }
 
-    // инфо
-    const info = document.createElement('div');
-    info.className = 'info';
-    info.innerHTML = `
-      <h3>${getHighlightedTitle(movie.title, q)}</h3>
-      <p>${movie.year}</p>
-    `;
-    card.appendChild(info);
+    // 2) search prefix (ignoring leading articles)
+    const q = ($searchInput?.value || '').toLowerCase().trim();
+    if (q) {
+      list = list.filter(m => {
+        const clean = (m.title || '').replace(/^(the|a|an)\s+/i, '');
+        return clean.toLowerCase().startsWith(q) || (m.title || '').toLowerCase().startsWith(q);
+      });
+    }
 
-    // клик → модалка
-    card.addEventListener('click', () => showModal(movie));
-    catalog.appendChild(card);
-  });
+    // 3) cards
+    list.forEach(movie => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.setProperty('--hl', movie.color || '#ffcc00');
 
-  // 4) пустая выдача
-  if (filtered.length === 0) {
-    catalog.innerHTML = '<p class="no-results">Nothing found</p>';
-  }
-}
+      // poster
+      if (ENABLE_FADE_IN) {
+        const img = document.createElement('img');
+        img.src = movie.poster;
+        img.alt = movie.title;
+        img.loading = 'lazy';
+        img.onload = () => img.classList.add('loaded');
+        if (img.complete) requestAnimationFrame(() => img.classList.add('loaded'));
+        card.appendChild(img);
+      } else {
+        card.insertAdjacentHTML('beforeend',
+          `<img src="${esc(movie.poster)}" alt="${esc(movie.title)}" loading="lazy">`
+        );
+      }
 
-/* ✨ Подсветка совпадения в названии (prefix) */
-function getHighlightedTitle(title, searchTerm) {
-  if (!searchTerm) return title;
-  const clean = title.replace(/^(the|a|an)\s+/i, '');
-  if (clean.toLowerCase().startsWith(searchTerm)) {
-    const prefixLen = title.length - clean.length;
-    return `<span class="highlight">${title.substring(0, prefixLen + searchTerm.length)}</span>${title.substring(prefixLen + searchTerm.length)}`;
-  }
-  if (title.toLowerCase().startsWith(searchTerm)) {
-    return `<span class="highlight">${title.substring(0, searchTerm.length)}</span>${title.substring(searchTerm.length)}`;
-  }
-  return title;
-}
+      // info
+      const info = document.createElement('div');
+      info.className = 'info';
+      info.innerHTML = `
+        <h3>${highlightTitle(movie.title, q)}</h3>
+        <p>${movie.year ?? ''}</p>
+      `;
+      card.appendChild(info);
 
-/* ⏳ Кнопки десятилетий */
-function setupDecadeFilters() {
-  document.querySelectorAll('.decade-filters button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentDecade = btn.dataset.decade;
-      document.querySelectorAll('.decade-filters button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderMovies(allMovies);
+      // open modal
+      card.addEventListener('click', () => showModal(movie));
+      $catalog.appendChild(card);
     });
-  });
-}
 
-/* 🔍 Живой поиск */
-function setupSearch() {
-  const input = document.getElementById('search-input');
-  if (!input) return;
-  input.addEventListener('input', () => renderMovies(allMovies));
-}
-
-/* ============= МОДАЛКА ============= */
-
-/* Открытие модалки и заполнение данных */
-function showModal(movie) {
-  const modal = document.getElementById('modal');
-
-  // контент
-  setText('modal-title', movie.title);
-  setText('modal-year', movie.year);
-  setText('modal-notes', movie.notes || '');
-
-  // цитаты
-  const quotesList = document.getElementById('modal-quotes');
-  quotesList.innerHTML = '';
-  (movie.quotes || []).forEach(q => {
-    const li = document.createElement('li');
-    li.textContent = q;
-    quotesList.appendChild(li);
-  });
-
-  // ссылки
-  const linksList = document.getElementById('modal-links');
-  linksList.innerHTML = '';
-  (movie.links || []).forEach(url => {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = url;
-    a.textContent = url;
-    a.target = '_blank';
-    li.appendChild(a);
-    linksList.appendChild(li);
-  });
-
-  // трейлер
-  setupTrailer(movie);
-
-  // показ модалки
-  modal.classList.remove('closing');
-  modal.style.display = 'flex';
-  if (ENABLE_MODAL_ANIM) {
-    requestAnimationFrame(() => modal.classList.add('visible'));
+    if (list.length === 0) {
+      $catalog.innerHTML = '<p class="no-results">Nothing found</p>';
+    }
   }
-}
 
-/* Крестик «×» */
-document.getElementById('close').addEventListener('click', () => closeModal());
-
-/* Закрытие модалки (учитываем анимацию и остановку трейлера) */
-function closeModal() {
-  const modal = document.getElementById('modal');
-
-  // остановить и скрыть трейлер
-  resetTrailer();
-
-  if (!ENABLE_MODAL_ANIM) {
-    modal.style.display = 'none';
-    modal.classList.remove('visible', 'closing');
-    return;
+  // Highlight search match at the start (prefix)
+  function highlightTitle(title = '', searchTerm = '') {
+    if (!searchTerm) return esc(title);
+    const clean = title.replace(/^(the|a|an)\s+/i, '');
+    if (clean.toLowerCase().startsWith(searchTerm)) {
+      const prefixLen = title.length - clean.length;
+      const hiEnd = prefixLen + searchTerm.length;
+      return `<span class="highlight">${esc(title.substring(0, hiEnd))}</span>${esc(title.substring(hiEnd))}`;
+    }
+    if (title.toLowerCase().startsWith(searchTerm)) {
+      return `<span class="highlight">${esc(title.substring(0, searchTerm.length))}</span>${esc(title.substring(searchTerm.length))}`;
+    }
+    return esc(title);
   }
-  modal.classList.remove('visible');
-  modal.classList.add('closing');
-  setTimeout(() => {
-    modal.style.display = 'none';
-    modal.classList.remove('closing');
-  }, 200); // синхронизировано с --modal-dur в CSS
-}
 
-/* Закрытие модалки по клику на тёмный фон */
-function setupModalBGClose() {
-  const modal = document.getElementById('modal');
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
-}
+  // Decade buttons
+  function setupDecadeFilters() {
+    if (!$decadeBar) return;
+    $decadeBar.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentDecade = btn.dataset.decade || 'all';
+        $decadeBar.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderMovies(allMovies);
+      });
+    });
+  }
 
-/* ============= ТРЕЙЛЕРЫ ============= */
+  // Live search (debounced)
+  function setupSearch() {
+    if (!$searchInput) return;
+    const onInput = debounce(() => renderMovies(allMovies), 120);
+    $searchInput.addEventListener('input', onInput);
+  }
 
-/* Ищем ссылку трейлера: сначала явное поле movie.trailer, затем первая подходящая из links */
-function getTrailerUrl(movie) {
-  if (!ENABLE_TRAILERS) return null;
-  if (movie.trailer && typeof movie.trailer === 'string') return movie.trailer;
+  // Modal fill + show
+  function showModal(movie) {
+    if (!$modal) return;
 
-  const links = Array.isArray(movie.links) ? movie.links : [];
-  return links.find(u => /youtube\.com\/watch\?v=|youtu\.be\/|vimeo\.com\//i.test(u)) || null;
-}
+    setText($mTitle, movie.title);
+    setText($mYear, String(movie.year ?? ''));
+    setText($mNotes, movie.notes || '');
 
-/* Превращаем обычный URL в embed-URL для iframe (YouTube/Vimeo) */
-function toEmbedUrl(url) {
-  if (!url) return '';
-  // YouTube: https://www.youtube.com/watch?v=ID → /embed/ID
-  const ytWatch = url.match(/youtube\.com\/watch\?v=([^&]+)/i);
-  if (ytWatch) return `https://www.youtube.com/embed/${ytWatch[1]}?autoplay=1`;
-  // YouTube short: https://youtu.be/ID → /embed/ID
-  const ytShort = url.match(/youtu\.be\/([^?&]+)/i);
-  if (ytShort) return `https://www.youtube.com/embed/${ytShort[1]}?autoplay=1`;
-  // Vimeo: https://vimeo.com/ID → player.vimeo.com/video/ID
-  const vimeo = url.match(/vimeo\.com\/(\d+)/i);
-  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`;
-  // по умолчанию — оригинал
-  return url;
-}
+    // quotes
+    $mQuotes.innerHTML = '';
+    (movie.quotes || []).forEach(qt => {
+      const li = document.createElement('li');
+      li.textContent = qt;
+      $mQuotes.appendChild(li);
+    });
 
-/* Сброс плеера (чтобы видео не играло после закрытия) */
-function resetTrailer() {
-  const wrap  = document.getElementById('trailer-wrap');
-  const frame = document.getElementById('trailer-frame');
-  const btn   = document.getElementById('trailer-btn');
-  if (frame) frame.src = '';
-  if (wrap)  wrap.hidden = true;
-  if (btn)   btn.hidden = true;
-}
+    // links
+    $mLinks.innerHTML = '';
+    (movie.links || []).forEach(url => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = url;
+      a.textContent = url;
+      a.target = '_blank';
+      li.appendChild(a);
+      $mLinks.appendChild(li);
+    });
 
-/* Настройка кнопки и плеера под конкретный фильм */
-function setupTrailer(movie) {
-  const btn   = document.getElementById('trailer-btn');
-  const wrap  = document.getElementById('trailer-wrap');
-  const frame = document.getElementById('trailer-frame');
+    // trailer
+    setupTrailer(movie);
 
-  resetTrailer();               // сбрасываем предыдущий плеер
-  if (!ENABLE_TRAILERS) return;
+    // show
+    $modal.hidden = false;
+    $modal.style.display = 'flex';
+    $modal.classList.remove('closing');
+    if (ENABLE_MODAL_ANIM) requestAnimationFrame(() => $modal.classList.add('visible'));
 
-  const url = getTrailerUrl(movie);
-  if (!url) return;             // если трейлера нет — кнопка остаётся скрытой
+    // focus for accessibility
+    $close?.focus();
+  }
 
-  btn.hidden = false;
-  btn.onclick = () => {
-    wrap.hidden = false;
-    frame.src = toEmbedUrl(url);
-  };
-}
+  // Close modal (button/backdrop/Esc)
+  function closeModal() {
+    if (!$modal) return;
+    resetTrailer();
 
-/* ===== Хелперы ===== */
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value ?? '';
-}
+    if (!ENABLE_MODAL_ANIM) {
+      $modal.style.display = 'none';
+      $modal.hidden = true;
+      $modal.classList.remove('visible', 'closing');
+      return;
+    }
+    $modal.classList.remove('visible');
+    $modal.classList.add('closing');
+    setTimeout(() => {
+      $modal.style.display = 'none';
+      $modal.hidden = true;
+      $modal.classList.remove('closing');
+    }, 200);
+  }
 
-/* 🚀 Старт */
-loadMovies();
+  function wireModalGeneral() {
+    // close button
+    if ($close) $close.addEventListener('click', closeModal);
+
+    // backdrop click
+    if ($modal) {
+      $modal.addEventListener('click', (e) => {
+        if (e.target === $modal) closeModal();
+      });
+    }
+
+    // Esc key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && $modal && !$modal.hidden) closeModal();
+    });
+  }
+
+  // Trailer helpers
+  function setupTrailer(movie) {
+    if (!ENABLE_TRAILERS || !$trailerBtn || !$trailerWrap || !$trailerFrame) return;
+
+    resetTrailer(); // clear prev
+
+    // Priority: explicit movie.trailer, then first suitable link
+    const rawUrl = movie.trailer || (Array.isArray(movie.links) ? movie.links.find(isVideoLink) : null);
+    if (!rawUrl) return;
+
+    $trailerBtn.hidden = false;
+    $trailerBtn.onclick = () => {
+      $trailerWrap.hidden = false;
+      $trailerFrame.src = toEmbedUrl(rawUrl);
+      $trailerFrame.setAttribute('loading', 'lazy');
+      $trailerFrame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+      $trailerFrame.setAttribute('allow',
+        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+    };
+  }
+
+  function resetTrailer() {
+    if ($trailerFrame) $trailerFrame.src = '';
+    if ($trailerWrap)  $trailerWrap.hidden = true;
+    if ($trailerBtn)   $trailerBtn.hidden = true;
+  }
+
+  function isVideoLink(u = '') {
+    return /youtube\.com\/watch\?v=|youtu\.be\/|vimeo\.com\//i.test(u);
+  }
+
+  // Convert to embed (privacy for YouTube)
+  function toEmbedUrl(url) {
+    if (!url) return '';
+
+    const ytWatch = url.match(/youtube\.com\/watch\?v=([^&]+)/i);
+    if (ytWatch) return `https://www.youtube-nocookie.com/embed/${ytWatch[1]}?autoplay=1`;
+
+    const ytShort = url.match(/youtu\.be\/([^?&]+)/i);
+    if (ytShort) return `https://www.youtube-nocookie.com/embed/${ytShort[1]}?autoplay=1`;
+
+    const vimeo = url.match(/vimeo\.com\/(\d+)/i);
+    if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`;
+
+    return url;
+  }
+
+  // Header helpers (optional future stuff)
+  function wireHeader() {
+    // placeholder for future header actions
+  }
+
+  // --- Utilities ---
+  function byId(id) { return document.getElementById(id); }
+  function q(sel, root = document) { return root.querySelector(sel); }
+  function setText(el, value) { if (el) el.textContent = value ?? ''; }
+
+  function esc(s = '') {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function debounce(fn, ms) {
+    let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+})();
