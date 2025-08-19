@@ -1,261 +1,111 @@
-/* ===========================================================
-   Movie Catalog — main script
-   Фичи: поиск, фильтры, подсветка, fade-in, модалка, трейлеры
-   =========================================================== */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-let allMovies = [];
-let currentDecade = 'all';
+  <title>Andy's Movies</title>
+  <meta name="description" content="Classic movies by Andy: trailers, posters, and the best films.">
 
-/* ===== Feature toggles (для быстрого отката) ===== */
-const ENABLE_FADE_IN     = true;  // плавное проявление постеров
-const ENABLE_MODAL_ANIM  = true;  // анимация открытия/закрытия модалки
-const ENABLE_TRAILERS    = true;  // кнопка трейлера + встроенный плеер
+  <!-- Favicon -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
-/* 📥 Загрузка фильмов из JSON */
-function loadMovies() {
-  fetch('movies.json')
-    .then(res => res.json())
-    .then(movies => {
-      allMovies = movies;
-      renderMovies(movies);
-      setupDecadeFilters();
-      setupSearch();
-      setupModalBGClose(); // закрытие модалки по клику на фон
-    })
-    .catch(err => console.error('Load error:', err));
-}
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css"/>
 
-/* 🎨 Отрисовка каталога (десятилетия + поиск + подсветка) */
-function renderMovies(movies) {
-  const catalog = document.getElementById('catalog');
-  catalog.innerHTML = '';
+  <!-- Open Graph (Telegram) -->
+  <meta property="og:title" content="Andy's Movies">
+  <meta property="og:description" content="Classic movies by Andy: trailers, posters, and the best films.">
+  <meta property="og:image" content="https://oratortele-pixel.github.io/andysmovies/assets/og/og-banner-1200x630.jpg?v=4">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://oratortele-pixel.github.io/andysmovies/">
+</head>
+<body>
+  <!-- Header (logo + centered search) -->
+  <header class="site-header">
+    <img src="assets/og/logo.png" alt="Andy's Movies" class="logo-img">
+    <input type="search" id="search-input" class="search-bar"
+           placeholder="Search for a movie..." autocomplete="off">
+  </header>
 
-  // 1) фильтр по десятилетию
-  let filtered = movies;
-  if (currentDecade !== 'all') {
-    const d0 = parseInt(currentDecade, 10);
-    filtered = movies.filter(m => m.year >= d0 && m.year < d0 + 10);
-  }
+  <!-- Decade filters -->
+  <div class="decade-filters">
+    <button data-decade="all" class="active">All</button>
+    <button data-decade="1970">1970s</button>
+    <button data-decade="1980">1980s</button>
+    <button data-decade="1990">1990s</button>
+    <button data-decade="2000">2000s</button>
+    <button data-decade="2010">2010s</button>
+    <button data-decade="2020">2020s</button>
+  </div>
 
-  // 2) поиск по префиксу, игнорируя артикли
-  const q = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
-  if (q) {
-    filtered = filtered.filter(m => {
-      const clean = m.title.replace(/^(the|a|an)\s+/i, '');
-      return clean.toLowerCase().startsWith(q) || m.title.toLowerCase().startsWith(q);
-    });
-  }
+  <!-- Catalog -->
+  <div id="catalog" class="catalog"></div>
 
-  // 3) карточки
-  filtered.forEach(movie => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.setProperty('--hl', movie.color || '#ffcc00'); // цвет подсветки заголовка
+  <!-- Modal (big) -->
+  <div id="modal" class="modal" hidden>
+    <div class="modal-content">
+      <button id="close" class="close" aria-label="Close">&times;</button>
 
-    // постер (вариант с fade-in)
-    if (ENABLE_FADE_IN) {
-      const img = document.createElement('img');
-      img.src = movie.poster;
-      img.alt = movie.title;
-      img.loading = 'lazy';
-      img.onload = () => img.classList.add('loaded');
-      // если картинка уже из кэша — onload может не сработать
-      if (img.complete) requestAnimationFrame(() => img.classList.add('loaded'));
-      card.appendChild(img);
-    } else {
-      // откат: без fade-in
-      card.insertAdjacentHTML('beforeend', `<img src="${movie.poster}" alt="${movie.title}" loading="lazy">`);
-    }
+      <h2 id="modal-title"></h2>
+      <p id="modal-year"></p>
+      <p id="modal-notes"></p>
 
-    // инфо
-    const info = document.createElement('div');
-    info.className = 'info';
-    info.innerHTML = `
-      <h3>${getHighlightedTitle(movie.title, q)}</h3>
-      <p>${movie.year}</p>
-    `;
-    card.appendChild(info);
+      <h3>Quotes</h3>
+      <ul id="modal-quotes"></ul>
 
-    // клик → модалка
-    card.addEventListener('click', () => showModal(movie));
-    catalog.appendChild(card);
-  });
+      <h3>Links</h3>
+      <ul id="modal-links"></ul>
 
-  // 4) пустая выдача
-  if (filtered.length === 0) {
-    catalog.innerHTML = '<p class="no-results">Nothing found</p>';
-  }
-}
+      <!-- Trailer button -->
+      <button id="trailer-btn" class="btn trailer-btn" hidden>Watch trailer</button>
 
-/* ✨ Подсветка совпадения в названии (prefix) */
-function getHighlightedTitle(title, searchTerm) {
-  if (!searchTerm) return title;
-  const clean = title.replace(/^(the|a|an)\s+/i, '');
-  if (clean.toLowerCase().startsWith(searchTerm)) {
-    const prefixLen = title.length - clean.length;
-    return `<span class="highlight">${title.substring(0, prefixLen + searchTerm.length)}</span>${title.substring(prefixLen + searchTerm.length)}`;
-  }
-  if (title.toLowerCase().startsWith(searchTerm)) {
-    return `<span class="highlight">${title.substring(0, searchTerm.length)}</span>${title.substring(searchTerm.length)}`;
-  }
-  return title;
-}
+      <!-- Trailer player -->
+      <div id="trailer-wrap" class="trailer-wrap" hidden>
+        <iframe
+          id="trailer-frame"
+          src=""
+          title="Trailer"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </div>
 
-/* ⏳ Кнопки десятилетий */
-function setupDecadeFilters() {
-  document.querySelectorAll('.decade-filters button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentDecade = btn.dataset.decade;
-      document.querySelectorAll('.decade-filters button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderMovies(allMovies);
-    });
-  });
-}
+  <!-- Scripts -->
+  <script src="script.js"></script>
 
-/* 🔍 Живой поиск */
-function setupSearch() {
-  const input = document.getElementById('search-input');
-  if (!input) return;
-  input.addEventListener('input', () => renderMovies(allMovies));
-}
+  <!-- Tiny addon: privacy trailer + stop on close -->
+  <script>
+    (function () {
+      const trailerBtn   = document.getElementById('trailer-btn');
+      const trailerWrap  = document.getElementById('trailer-wrap');
+      const trailerFrame = document.getElementById('trailer-frame');
+      const closeBtn     = document.getElementById('close');
 
-/* ============= МОДАЛКА ============= */
+      if (trailerBtn) {
+        trailerBtn.addEventListener('click', () => {
+          const yt = trailerBtn.dataset.yt;         // ожидаем ID YouTube в data-yt
+          if (!yt) return;
+          trailerFrame.src = 'https://www.youtube-nocookie.com/embed/' + yt + '?autoplay=1';
+          trailerFrame.setAttribute('loading','lazy');
+          trailerFrame.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
+          trailerWrap.hidden = false;
+        });
+      }
 
-/* Открытие модалки и заполнение данных */
-function showModal(movie) {
-  const modal = document.getElementById('modal');
-
-  // контент
-  setText('modal-title', movie.title);
-  setText('modal-year', movie.year);
-  setText('modal-notes', movie.notes || '');
-
-  // цитаты
-  const quotesList = document.getElementById('modal-quotes');
-  quotesList.innerHTML = '';
-  (movie.quotes || []).forEach(q => {
-    const li = document.createElement('li');
-    li.textContent = q;
-    quotesList.appendChild(li);
-  });
-
-  // ссылки
-  const linksList = document.getElementById('modal-links');
-  linksList.innerHTML = '';
-  (movie.links || []).forEach(url => {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = url;
-    a.textContent = url;
-    a.target = '_blank';
-    li.appendChild(a);
-    linksList.appendChild(li);
-  });
-
-  // трейлер
-  setupTrailer(movie);
-
-  // показ модалки
-  modal.classList.remove('closing');
-  modal.style.display = 'flex';
-  if (ENABLE_MODAL_ANIM) {
-    requestAnimationFrame(() => modal.classList.add('visible'));
-  }
-}
-
-/* Крестик «×» */
-document.getElementById('close').addEventListener('click', () => closeModal());
-
-/* Закрытие модалки (учитываем анимацию и остановку трейлера) */
-function closeModal() {
-  const modal = document.getElementById('modal');
-
-  // остановить и скрыть трейлер
-  resetTrailer();
-
-  if (!ENABLE_MODAL_ANIM) {
-    modal.style.display = 'none';
-    modal.classList.remove('visible', 'closing');
-    return;
-  }
-  modal.classList.remove('visible');
-  modal.classList.add('closing');
-  setTimeout(() => {
-    modal.style.display = 'none';
-    modal.classList.remove('closing');
-  }, 200); // синхронизировано с --modal-dur в CSS
-}
-
-/* Закрытие модалки по клику на тёмный фон */
-function setupModalBGClose() {
-  const modal = document.getElementById('modal');
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
-}
-
-/* ============= ТРЕЙЛЕРЫ ============= */
-
-/* Ищем ссылку трейлера: сначала явное поле movie.trailer, затем первая подходящая из links */
-function getTrailerUrl(movie) {
-  if (!ENABLE_TRAILERS) return null;
-  if (movie.trailer && typeof movie.trailer === 'string') return movie.trailer;
-
-  const links = Array.isArray(movie.links) ? movie.links : [];
-  return links.find(u => /youtube\.com\/watch\?v=|youtu\.be\/|vimeo\.com\//i.test(u)) || null;
-}
-
-/* Превращаем обычный URL в embed-URL для iframe (YouTube/Vimeo) */
-function toEmbedUrl(url) {
-  if (!url) return '';
-  // YouTube: https://www.youtube.com/watch?v=ID → /embed/ID
-  const ytWatch = url.match(/youtube\.com\/watch\?v=([^&]+)/i);
-  if (ytWatch) return `https://www.youtube.com/embed/${ytWatch[1]}?autoplay=1`;
-  // YouTube short: https://youtu.be/ID → /embed/ID
-  const ytShort = url.match(/youtu\.be\/([^?&]+)/i);
-  if (ytShort) return `https://www.youtube.com/embed/${ytShort[1]}?autoplay=1`;
-  // Vimeo: https://vimeo.com/ID → player.vimeo.com/video/ID
-  const vimeo = url.match(/vimeo\.com\/(\d+)/i);
-  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`;
-  // по умолчанию — оригинал
-  return url;
-}
-
-/* Сброс плеера (чтобы видео не играло после закрытия) */
-function resetTrailer() {
-  const wrap  = document.getElementById('trailer-wrap');
-  const frame = document.getElementById('trailer-frame');
-  const btn   = document.getElementById('trailer-btn');
-  if (frame) frame.src = '';
-  if (wrap)  wrap.hidden = true;
-  if (btn)   btn.hidden = true;
-}
-
-/* Настройка кнопки и плеера под конкретный фильм */
-function setupTrailer(movie) {
-  const btn   = document.getElementById('trailer-btn');
-  const wrap  = document.getElementById('trailer-wrap');
-  const frame = document.getElementById('trailer-frame');
-
-  resetTrailer();               // сбрасываем предыдущий плеер
-  if (!ENABLE_TRAILERS) return;
-
-  const url = getTrailerUrl(movie);
-  if (!url) return;             // если трейлера нет — кнопка остаётся скрытой
-
-  btn.hidden = false;
-  btn.onclick = () => {
-    wrap.hidden = false;
-    frame.src = toEmbedUrl(url);
-  };
-}
-
-/* ===== Хелперы ===== */
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value ?? '';
-}
-
-/* 🚀 Старт */
-loadMovies();
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          trailerFrame.src = '';                    // стоп видео
+          trailerWrap.hidden = true;
+        });
+      }
+    }());
+  </script>
+</body>
+</html>
