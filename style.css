@@ -42,7 +42,7 @@ body {
 }
 
 .logo-img {
-  height: 48px;
+  height: 76px;
   width: auto;
   display: block;
 }
@@ -142,3 +142,4 @@ body {
   border: 1px solid var(--gold);
   padding: 8px 15px; border-radius: 20px;
   cursor: pointer; transition: all .3s; f
+
