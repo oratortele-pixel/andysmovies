@@ -184,3 +184,22 @@ body {
   width: 100%;
   height: 100%;
 }
+/* 🎬 Header */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* можешь заменить на space-between если хочешь справа поиск */
+  padding: 20px;
+  background-color: #111; /* тёмный фон под логотип */
+  border-bottom: 2px solid gold; /* золотая линия в стиле поиска */
+}
+
+.logo {
+  font-size: 2rem;
+  font-weight: bold;
+  color: gold;
+  font-family: 'Georgia', serif; /* кинематографический стиль */
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
