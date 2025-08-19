@@ -14,7 +14,7 @@
   <!-- Styles -->
   <link rel="stylesheet" href="style.css"/>
 
-  <!-- Open Graph -->
+  <!-- Open Graph (Telegram) -->
   <meta property="og:title" content="Andy's Movies">
   <meta property="og:description" content="Classic movies by Andy: trailers, posters, and the best films.">
   <meta property="og:image" content="https://oratortele-pixel.github.io/andysmovies/assets/og/og-banner-1200x630.jpg?v=4">
@@ -24,7 +24,7 @@
   <meta property="og:url" content="https://oratortele-pixel.github.io/andysmovies/">
 </head>
 <body>
-  <!-- Header (logo + search) -->
+  <!-- Header (logo + centered search) -->
   <header class="site-header">
     <img src="assets/og/logo.png" alt="Andy's Movies" class="logo-img">
     <input type="search" id="search-input" class="search-bar"
@@ -45,7 +45,7 @@
   <!-- Catalog -->
   <div id="catalog" class="catalog"></div>
 
-  <!-- Modal with details + trailer -->
+  <!-- Modal (big) -->
   <div id="modal" class="modal" hidden>
     <div class="modal-content">
       <button id="close" class="close" aria-label="Close">&times;</button>
@@ -79,5 +79,33 @@
 
   <!-- Scripts -->
   <script src="script.js"></script>
+
+  <!-- Tiny addon: privacy trailer + stop on close -->
+  <script>
+    (function () {
+      const trailerBtn   = document.getElementById('trailer-btn');
+      const trailerWrap  = document.getElementById('trailer-wrap');
+      const trailerFrame = document.getElementById('trailer-frame');
+      const closeBtn     = document.getElementById('close');
+
+      if (trailerBtn) {
+        trailerBtn.addEventListener('click', () => {
+          const yt = trailerBtn.dataset.yt;         // ожидаем ID YouTube в data-yt
+          if (!yt) return;
+          trailerFrame.src = 'https://www.youtube-nocookie.com/embed/' + yt + '?autoplay=1';
+          trailerFrame.setAttribute('loading','lazy');
+          trailerFrame.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
+          trailerWrap.hidden = false;
+        });
+      }
+
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          trailerFrame.src = '';                    // стоп видео
+          trailerWrap.hidden = true;
+        });
+      }
+    }());
+  </script>
 </body>
 </html>
