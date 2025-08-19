@@ -1,34 +1,34 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <!-- Basic -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <title>Andy's Movies — каталог фильмов</title>
-  <meta name="description" content="Classic movies catalog by Andy: трейлеры, постеры и лучшие фильмы.">
+  <title>Andy's Movies</title>
+  <meta name="description" content="Classic movies by Andy: trailers, posters, and the best films.">
 
-  <!-- Favicon (если есть) -->
+  <!-- Favicon -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
   <!-- Styles -->
   <link rel="stylesheet" href="style.css"/>
 
-  <!-- Open Graph для Telegram -->
-  <meta property="og:title" content="Andy's Movies — каталог фильмов">
-  <meta property="og:description" content="Classic movies catalog by Andy: трейлеры, постеры и лучшие фильмы.">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Andy's Movies">
+  <meta property="og:description" content="Classic movies by Andy: trailers, posters, and the best films.">
   <meta property="og:image" content="https://oratortele-pixel.github.io/andysmovies/assets/og/og-banner-1200x630.jpg?v=3">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://oratortele-pixel.github.io/andysmovies/">
 </head>
 <body>
 
-  <!-- 🔍 Поиск -->
+  <!-- 🔍 Search -->
   <div class="search-container" id="search">
-    <input type="search" id="search-input" placeholder="Найти фильм..." autocomplete="off" />
+    <input type="search" id="search-input" placeholder="Search for a movie..." autocomplete="off" />
   </div>
 
-  <!-- ⏳ Фильтры по десятилетиям -->
+  <!-- ⏳ Decade filters -->
   <div class="decade-filters">
     <button data-decade="all" class="active">All</button>
     <button data-decade="1970">1970s</button>
@@ -39,10 +39,10 @@
     <button data-decade="2020">2020s</button>
   </div>
 
-  <!-- 🎬 Каталог карточек -->
+  <!-- 🎬 Catalog -->
   <div id="catalog" class="catalog"></div>
 
-  <!-- 📖 Модалка с деталями + трейлер -->
+  <!-- 📖 Modal with details + trailer -->
   <div id="modal" class="modal" hidden>
     <div class="modal-content">
       <button id="close" class="close" aria-label="Close">&times;</button>
@@ -57,10 +57,10 @@
       <h3>Links</h3>
       <ul id="modal-links"></ul>
 
-      <!-- ▶️ Кнопка открытия трейлера (ID поставим позже) -->
+      <!-- ▶️ Trailer button -->
       <button id="trailer-btn" class="btn trailer-btn" hidden>Watch trailer</button>
 
-      <!-- 🎥 Плеер (появится по клику) -->
+      <!-- 🎥 Trailer player -->
       <div id="trailer-wrap" class="trailer-wrap" hidden>
         <iframe
           id="trailer-frame"
@@ -74,7 +74,7 @@
     </div>
   </div>
 
-  <!-- Скрипты -->
+  <!-- Scripts -->
   <script src="script.js"></script>
 </body>
 </html>
