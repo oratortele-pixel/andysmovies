@@ -1,88 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-<head>
-  <!-- Basic meta -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Andy's Movies</title>
 
-  <!-- Optional: блокировка индексации -->
-  <meta name="robots" content="noindex, nofollow"/>
-
-  <title>Andy's Movies — каталог фильмов</title>
-  <meta name="description" content="Classic movies catalog by Andy: трейлеры, постеры и лучшие фильмы.">
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-
-  <!-- Open Graph для Telegram -->
-  <meta property="og:title" content="Andy's Movies — каталог фильмов">
-  <meta property="og:description" content="Classic movies catalog by Andy: трейлеры, постеры и лучшие фильмы.">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Andy's Movies">
+  <meta property="og:description" content="Сборник любимых фильмов 🎬">
   <meta property="og:image" content="https://oratortele-pixel.github.io/andysmovies/assets/og/og-banner-1200x630.jpg?v=2">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://oratortele-pixel.github.io/andysmovies/">
-</head>
 
-</head>
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Andy's Movies">
+  <meta name="twitter:description" content="Сборник любимых фильмов 🎬">
+  <meta name="twitter:image" content="https://oratortele-pixel.github.io/andysmovies/assets/og/og-banner-1200x630.jpg?v=2">
 
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #111;
+      color: #eee;
+    }
+    h1 {
+      color: #ffcc00;
+    }
+  </style>
+</head>
 <body>
-  <!-- 🔍 Search (empty, like IMDb) -->
-  <div class="search-container">
-    <input type="text" id="search-input" />
-  </div>
-
-  <!-- ⏳ Decade filters -->
-  <div class="decade-filters">
-    <button data-decade="all" class="active">All</button>
-    <button data-decade="1970">1970s</button>
-    <button data-decade="1980">1980s</button>
-    <button data-decade="1990">1990s</button>
-    <button data-decade="2000">2000s</button>
-    <button data-decade="2010">2010s</button>
-    <button data-decade="2020">2020s</button>
-  </div>
-
-  <!-- 🎬 Catalog -->
-  <div id="catalog" class="catalog"></div>
-
-  <!-- 📖 Modal with details + trailer -->
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <!-- Close button -->
-      <span id="close" class="close" aria-label="Close">&times;</span>
-
-      <!-- Movie title + year + notes -->
-      <h2 id="modal-title"></h2>
-      <p id="modal-year"></p>
-      <p id="modal-notes"></p>
-
-      <!-- Quotes -->
-      <h3>Quotes</h3>
-      <ul id="modal-quotes"></ul>
-
-      <!-- External links -->
-      <h3>Links</h3>
-      <ul id="modal-links"></ul>
-
-      <!-- ▶️ Trailer button (appears only if a trailer is available) -->
-      <button id="trailer-btn" class="btn trailer-btn" hidden>Watch trailer</button>
-
-      <!-- 🎥 Trailer player (hidden until user clicks the button) -->
-      <div id="trailer-wrap" class="trailer-wrap" hidden>
-        <iframe
-          id="trailer-frame"
-          src=""
-          title="Trailer"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="script.js"></script>
+  <h1>Andy's Movies</h1>
+  <p>Добро пожаловать! Здесь собраны мои любимые фильмы.</p>
 </body>
 </html>
