@@ -203,3 +203,26 @@ body {
   letter-spacing: 2px;
 }
 
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* расстояние между логотипом и поиском */
+  padding: 15px 20px;
+}
+
+.logo-img {
+  height: 50px; /* подгони под размер логотипа */
+}
+
+.search-bar {
+  flex: 1;
+  padding: 10px 15px;
+  border: 2px solid #ffcc00;
+  border-radius: 25px;
+  background: #111;
+  color: #eee;
+  font-size: 16px;
+}
+
+
+
