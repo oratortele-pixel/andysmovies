@@ -1,145 +1,53 @@
-/* ===========================
-   Base / tokens
-=========================== */
-:root {
-  --bg: #121212;
-  --card: #1e1e1e;
-  --gold: #ffcc00;
-  --gold-strong: #ffaa00;
-  --text: #ffffff;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 20px;
-}
-
-/* ===========================
-   Header (logo left, search center, space right)
-=========================== */
+/* ====== Стили для шапки ====== */
 .site-header {
-  position: sticky; top: 0; z-index: 10;
-  display: grid;
-  grid-template-columns: auto 1fr auto; /* logo | center | right-slot */
-  align-items: center;
-  column-gap: 20px;
-  padding: 12px 20px;
-  background: #111;
-  border-bottom: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background-color: #1c1c1c;
+    position: fixed;       /* фиксируем сверху */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;         /* всегда поверх контента */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4); /* лёгкая тень у хедера */
 }
 
-/* правый “пустой слот”, чтобы поиск был реально по центру */
-.site-header::after {
-  content: "";
-  display: block;
-  width: 140px;          /* резерв под будущую кнопку справа */
-  height: 1px;           /* визуально не видно */
-}
-
+/* ====== Логотип ====== */
 .logo-img {
-  height: 76px;
-  width: auto;
-  display: block;
+    height: 76px;  /* можешь менять это значение */
+    width: auto;
+    display: block;
+
+    /* золотая тень */
+    filter: drop-shadow(0px 0px 8px rgba(255, 215, 0, 0.8));
 }
 
-/* поиск в хедере — по центру */
+/* ====== Поиск ====== */
 .search-bar {
-  justify-self: center;           /* центр ячейки */
-  width: min(520px, 80vw);
-  padding: 10px 16px;
-  border: 2px solid var(--gold);
-  border-radius: 28px;
-  background: #1a1a1a;
-  color: #eee;
-  font-size: 16px;
-  outline: none;
-}
-.search-bar::placeholder { color: #9a9a9a; }
-.search-bar:focus { box-shadow: 0 0 10px var(--gold); }
-
-/* Если старый поиск ещё есть в разметке — скрываем его */
-.search-container { display: none; }
-
-/* 📱 Mobile: складываем в колонку */
-@media (max-width: 640px) {
-  body { padding: 12px; }
-  .site-header {
-    grid-template-columns: 1fr;   /* одна колонка */
-    row-gap: 12px;
-  }
-  .site-header::after { width: 0; }
-  .logo-img { height: 42px; margin: 0 auto; }
-  .search-bar { width: 100%; justify-self: stretch; }
+    flex: 1;
+    max-width: 400px;
+    margin-left: 20px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    background-color: #2a2a2a;
+    color: #fff;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    transition: box-shadow 0.3s ease;
 }
 
-/* ===========================
-   Catalog grid
-=========================== */
-.catalog {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-  margin-top: 20px;
+.search-bar:focus {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
 }
 
-/* Movie card */
-.card {
-  width: 200px;
-  background-color: var(--card);
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform .2s, box-shadow .2s;
+/* ====== Чтобы контент не залезал под фиксированный header ====== */
+body {
+    margin: 0;
+    padding-top: 100px; /* высота header */
+    background-color: #111;
+    color: #fff;
+    font-family: Arial, sans-serif;
 }
-.card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 20px var(--gold);
-}
-
-/* Poster: fade-in + hover dim */
-.card img {
-  width: 100%;
-  display: block;
-  opacity: 0;
-  transition: opacity 1s ease-in-out;
-}
-.card img.loaded { opacity: 1; }
-.card img.loaded:hover { opacity: .85; transition: opacity .3s ease; }
-
-/* Info block */
-.card .info { padding: 10px; text-align: center; }
-
-/* Title highlight */
-.card .info h3 { transition: color .3s ease, text-shadow .3s ease; }
-.card:hover .info h3 { color: var(--gold); text-shadow: 0 0 8px var(--gold); }
-
-/* Highlight matches */
-.highlight { color: var(--gold); font-weight: bold; }
-
-/* Empty state */
-.no-results {
-  text-align: center;
-  color: #aaa;
-  font-size: 1.2em;
-  margin-top: 50px;
-}
-
-/* ===========================
-   Decade filters
-=========================== */
-.decade-filters {
-  display: flex; gap: 10px; margin: 20px 0;
-  justify-content: center; flex-wrap: wrap;
-}
-.decade-filters button {
-  background: #222; color: var(--gold);
-  border: 1px solid var(--gold);
-  padding: 8px 15px; border-radius: 20px;
-  cursor: pointer; transition: all .3s; f
-
