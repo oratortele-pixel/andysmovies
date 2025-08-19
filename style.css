@@ -218,3 +218,53 @@ body {
   .logo-img { height: var(--header-logo-h); margin: 0 auto; }
   .search-bar { width: 100%; justify-self: stretch; }
 }
+
+
+/* === Fullscreen-ish modal === */
+.modal {
+  display: none;                 /* JS покажет display:flex */
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);   /* потемнение */
+  backdrop-filter: blur(2px);    /* лёгкий блюр */
+  justify-content: center;
+  align-items: center;
+  padding: 24px;                 /* чтобы контент не лип к краям */
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  width: min(1000px, 96vw);      /* почти во всю ширину */
+  max-height: 90vh;              /* почти во всю высоту */
+  overflow: auto;                /* внутренний скролл, если контента много */
+  background: #1e1e1e;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 25px 60px rgba(0,0,0,.6);
+}
+
+/* крупнее типографика в модалке */
+.modal-content h2 { font-size: 32px; margin: 0 0 8px; }
+.modal-content h3 { font-size: 18px; margin: 18px 0 8px; }
+.modal-content p  { font-size: 16px; margin: 10px 0; }
+
+/* красивый крестик */
+.close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: #2a2a2a;
+  color: #fff;
+  font-size: 22px;
+  line-height: 36px;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.1);
+  transition: background .2s, transform .1s;
+}
+.close:hover { background: #333; transform: scale(1.05); }
+
+
